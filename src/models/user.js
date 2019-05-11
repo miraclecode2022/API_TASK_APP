@@ -38,7 +38,6 @@ const userSchema = mongoose.Schema({
         minlength : 6,
         trim : true,
         validate(password){
-            // giống như password === "password"
             if(password.toLowerCase().includes('password')){
                 throw new Error('Password wrong ! please try another password ')
             }
@@ -61,17 +60,13 @@ const userSchema = mongoose.Schema({
 // tạo liên kết ảo với Task
 userSchema.virtual('userTasks',{
     ref : 'Task', // liên kết với Task
-    localField : '_id', // khóa liên kết là id
-    foreignField : 'owner' // khóa ngoại của liên kết kia là owner
+    localField : '_id', 
+    foreignField : 'owner' 
 })
 
-//khi nào sài this. thuộc tính thì xài methods
-/////////////////// QUAN TRỌNG ////////////////////////////////
-        // sử dụng methods.toJSON sẽ quyết định cách mà bạn muốn res.send hiện thị ra json như thế nào ( tất cả res.send )
-/////////////////// QUAN TRỌNG ////////////////////////////////
 userSchema.methods.toJSON = function(){
     const user = this
-    const userObject = user.toObject() // gán all object trong user vào userObject với toObject của mongoose
+    const userObject = user.toObject() 
 
     delete userObject.password
     delete userObject.tokens
@@ -85,7 +80,7 @@ userSchema.methods.createAuthToken = async function() {
     const user = this
     const token = await jwt.sign({ _id : user._id.toString() }, process.env.JWT_SECRECT)
 
-    user.tokens = user.tokens.concat({token}) // gán user.tokens có object token ghép với token vừa đc tạo
+    user.tokens = user.tokens.concat({token}) 
     await user.save()
     return token
 }
@@ -105,9 +100,6 @@ userSchema.statics.findByCreDentials = async (email,password) => {
     return user
 }
 
-// MiddleWare sẽ có cấu trúc userSchema.pre là trước event, và userSchema.post là sau event
-// giá trị đầu tiên là hành động save, remove, validate, init...
-// buộc phải sử dụng function thường, k đc sử dụng arrow function vì k bind
 userSchema.pre('save', async function(next){
     const user = this
 
@@ -115,8 +107,7 @@ userSchema.pre('save', async function(next){
         user.password = await bcrypt.hash(user.password, 8)
     }
 
-    next() // biến next buộc phải sử dụng để báo là middleWare đã chạy xong và tiếp tục.
-    // nếu k dùng next() thì middleWare sẽ k bao giờ dừng :D 
+    next() 
 })
 
 // Delete user task when delete user
@@ -125,7 +116,6 @@ userSchema.pre('remove', async function(next) {
     await Task.deleteMany({owner : user._id})
 })
 
-// tạo Schema và sử dụng model User với Schema vừa tạo
 const User = mongoose.model('User', userSchema)
 
 module.exports = User
