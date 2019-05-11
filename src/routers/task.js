@@ -6,7 +6,7 @@ const auth = require('../middleware/auth')
 // POST task
 router.post('/tasks',auth, async(req,res) => {
     const task = new Task({
-        ...req.body, // coppy tất cá thông tin trong body vào vùng nhớ khác
+        ...req.body,
         owner : req.user._id
     })
 
@@ -26,29 +26,27 @@ router.get('/tasks',auth, async(req,res) => {
     const sort = {}
     try {
         if(req.query.completed){
-            match.completed = req.query.completed === 'true' // convert value của completed tring thành boolen
+            match.completed = req.query.completed === 'true'
         }
         if(req.query.sortBy){
-            const parts = req.query.sortBy.split(':') // gán value của sortBy thành parts và bỏ dấu : 
+            const parts = req.query.sortBy.split(':')
             console.log(parts);
             sort[parts[0]] = parts[1] === 'desc' ? -1 : 1
         }
 
-        // const tasks = await Task.find({owner : req.user._id}) -- cách 1
-        // res.send(task)
         await req.user.populate({
             path : 'userTasks',
             match,
             options : {
-                limit : parseInt(req.query.limit), // chuyển nhập từ ngoài vào thành kiểu int
-                skip : parseInt(req.query.skip),  // skip là bỏ qua số lượng result
+                limit : parseInt(req.query.limit), 
+                skip : parseInt(req.query.skip),  
                 sort : {
                    // createdAt : -1 // sort theo thời gian 
                    completed : -1
                 }
             }
             
-        }).execPopulate() // cách 2 show tasks theo liên kết ảo
+        }).execPopulate() 
         res.send(req.user.userTasks)
     } catch (err) {
         res.status(500).send(err)
@@ -61,7 +59,6 @@ router.get('/tasks/:id',auth, async(req,res) => {
     const _id = req.params.id
 
     try {
-        // const task = await Task.findById(_id)
         const task = await Task.findOne({ _id, owner : req.user._id })
 
         if(!task){
@@ -86,9 +83,6 @@ router.patch('/tasks/:id',auth, async(req,res) => {
     const data = req.body
     try {
         const task = await Task.findOne({ _id, owner : req.user._id})
-
-        // const task = await Task.findByIdAndUpdate(_id,data, {new : true, runValidators : true})
-        // new : true lấy giá trị mới, runValidator là chạy kiểm tra
         
         if(!task){
             return res.status(404).send({ Error : "Task Not Found"})
